@@ -122,6 +122,9 @@ class ResnetGenerator(nn.Module):
         return x_
 
 class ResnetBlock(nn.Module):
+    '''
+    The code is adapted from https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/models/networks.py
+    '''
     def __init__(self, conv_dim, norm_layer, padding_type='reflect', num_classes=10, use_dropout=False, use_bias=False):
         """Initialize the Resnet block
         A resnet block is a conv block with skip connections
