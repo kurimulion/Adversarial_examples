@@ -9,7 +9,7 @@ class Discriminator(nn.Module):
         This is a conditional discriminator with projection. The input is input image or generated image.
         With MNIST data the dimensions of output of last conv layer is N, conv_dim * 4, 1, 1
         Only implement the case for number of layer = 1, because the dimensions of the MNIST are much smaller.
-        The code is adapted from hhttps://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/models/pix2pix_model.py
+        The code is adapted from https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/models/pix2pix_model.py
         """
         super(Discriminator, self).__init__()
         p = 1
