@@ -75,10 +75,10 @@ class ResnetGenerator(nn.Module):
         self.down3 = nn.utils.spectral_norm(nn.Conv2d(conv_dim * 4, conv_dim * 8, 3, padding=1, stride=2, bias=use_bias))
         self.donwnrom3 = norm_layer(conv_dim * 8, num_classes)
 
-        self.res1 = Resnet(conv_dim * 8, norm_layer, use_dropout=use_dropout, use_bias=use_bias)
-        self.res2 = Resnet(conv_dim * 8, norm_layer, use_dropout=use_dropout, use_bias=use_bias)
-        self.res3 = Resnet(conv_dim * 8, norm_layer, use_dropout=use_dropout, use_bias=use_bias)
-        self.res4 = Resnet(conv_dim * 8, norm_layer, use_dropout=use_dropout, use_bias=use_bias)
+        self.res1 = ResnetBlock(conv_dim * 8, norm_layer, use_dropout=use_dropout, use_bias=use_bias)
+        self.res2 = ResnetBlock(conv_dim * 8, norm_layer, use_dropout=use_dropout, use_bias=use_bias)
+        self.res3 = ResnetBlock(conv_dim * 8, norm_layer, use_dropout=use_dropout, use_bias=use_bias)
+        self.res4 = ResnetBlock(conv_dim * 8, norm_layer, use_dropout=use_dropout, use_bias=use_bias)
 
         self.up1 = nn.utils.spectral_norm(nn.ConvTranspose2d(conv_dim * 8, conv_dim * 4, 3, padding=1, stride=2, bias=use_bias))
         self.upnorm1 = norm_layer(conv_dim * 4, num_classes)
