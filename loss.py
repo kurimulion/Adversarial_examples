@@ -34,3 +34,100 @@ def perturbation_loss(p, eps):
     l2_norm = p.view(N, C, -1).norm(dim=2)
     loss = F.relu(l2_norm - eps).mean()
     return loss
+
+# Hinge loss
+def discriminator_loss(logits_real, logits_fake):
+    """
+    Computes the discriminator loss described above.
+
+    Inputs:
+    - logits_real: PyTorch Variable of shape (N,) giving scores for the real data.
+    - logits_fake: PyTorch Variable of shape (N,) giving scores for the fake data.
+
+    Returns:
+    - loss: PyTorch Variable containing (scalar) the loss for the discriminator.
+    """
+    loss = None
+    d_loss_real = torch.mean(F.relu(1 - logits_real))
+    s_loss_fake = torch.mean(F.relu(1 + logits_fake))
+    loss = d_loss_real + s_loss_fake
+    return loss
+
+def generator_loss(logits_fake):
+    """
+    Computes the generator loss described above.
+
+    Inputs:
+    - logits_fake: PyTorch Variable of shape (N,) giving scores for the fake data.
+
+    Returns:
+    - loss: PyTorch Variable containing the (scalar) loss for the generator.
+    """
+    loss = -torch.mean(logits_fake)
+    return loss
+
+# least square loss
+def discriminator_loss_LS(logits_real, logits_fake):
+    """
+
+    Inputs:
+    - logits_real: PyTorch Variable of shape (N,) giving scores for the real data.
+    - logits_fake: PyTorch Variable of shape (N,) giving scores for the fake data.
+
+    Returns:
+    - loss: PyTorch Variable containing (scalar) the loss for the discriminator.
+    """
+    loss = None
+    probs_real = torch.sigmoid(logits_real)
+    probs_fake = torch.sigmoid(logits_fake)
+    d_loss_real = F.mse_loss(probs_real, torch.ones_like(probs_real))
+    s_loss_fake = F.mse_loss(probs_fake, torch.zeros_like(probs_fake))
+    loss = 1/2 * (d_loss_real + s_loss_fake)
+    return loss
+
+def generator_loss_LS(logits_fake):
+    """
+
+    Inputs:
+    - logits_fake: PyTorch Variable of shape (N,) giving scores for the fake data.
+
+    Returns:
+    - loss: PyTorch Variable containing the (scalar) loss for the generator.
+    """
+    probs_fake = torch.sigmoid(logits_fake)
+    loss = 1/2 * F.mse_loss(probs_fake, torch.ones_like(probs_fake))
+    return loss
+
+# BCE loss
+def discriminator_loss_BCE(logits_real, logits_fake):
+    """
+    Computes the discriminator loss described above.
+
+    Inputs:
+    - logits_real: PyTorch Variable of shape (N,) giving scores for the real data.
+    - logits_fake: PyTorch Variable of shape (N,) giving scores for the fake data.
+
+    Returns:
+    - loss: PyTorch Variable containing (scalar) the loss for the discriminator.
+    """
+    loss = None
+    probs_real = torch.sigmoid(logits_real)
+    probs_fake = torch.sigmoid(logits_fake)
+    d_loss_real = F.binary_cross_entropy(probs_real, torch.ones_like(probs_real))
+    s_loss_fake = F.binary_cross_entropy(probs_fake, torch.zeros_like(probs_fake))
+    loss = d_loss_real + s_loss_fake
+    return loss
+
+def generator_loss_BCE(logits_fake):
+    """
+
+    Inputs:
+    - logits_fake: PyTorch Variable of shape (N,) giving scores for the fake data.
+
+    Returns:
+    - loss: PyTorch Variable containing (scalar) the loss for the generator.
+    """
+    loss = None
+    probs_fake = torch.sigmoid(logits_fake)
+    loss = F.binary_cross_entropy(probs_fake, torch.ones_like(probs_fake))
+    return loss
