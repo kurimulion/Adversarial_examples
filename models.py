@@ -57,7 +57,7 @@ class ResnetGenerator(nn.Module):
     '''
     The code is adapted from https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/models/networks.py
     '''
-    def __init__(self, in_channels=1, norm_layer=selfattn.ConditionalBatchNorm2d, 
+    def __init__(self, in_channels=1, norm_layer=utils.ConditionalBatchNorm2d, 
                  use_dropout=False, num_classes=10, conv_dim=64, MNIST=True):
         super(ResnetGenerator, self).__init__()
         # affine transformation in normalization layer
@@ -180,7 +180,7 @@ class UnetGenerator(nn.Module):
     U-Net architecture, encoder-decoder architecture with skip connections
     The code is adapted from https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/models/networks.py
     '''
-    def __init__(self, in_channels=1, norm_layer=selfattn.ConditionalBatchNorm2d, num_classes=10, conv_dim=64, MNIST=True):
+    def __init__(self, in_channels=1, norm_layer=utils.ConditionalBatchNorm2d, num_classes=10, conv_dim=64, MNIST=True):
         super(UnetGenerator, self).__init__()
         self.u_block = UnetBlock(conv_dim * 8, conv_dim * 8, norm_layer, innermost=True, use_dropout=True)
         self.u_block = UnetBlock(conv_dim * 8, conv_dim * 8, norm_layer, submodule=self.u_block, use_dropout=True)
