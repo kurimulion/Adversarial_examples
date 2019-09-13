@@ -73,21 +73,24 @@ class ResnetGenerator(nn.Module):
         self.down2 = nn.utils.spectral_norm(nn.Conv2d(conv_dim * 2, conv_dim * 4, 3, padding=1, stride=2, bias=use_bias))
         self.downnorm2 = norm_layer(conv_dim * 4, num_classes)
         self.down3 = nn.utils.spectral_norm(nn.Conv2d(conv_dim * 4, conv_dim * 8, 3, padding=1, stride=2, bias=use_bias))
-        self.donwnrom3 = norm_layer(conv_dim * 8, num_classes)
+        self.downnorm3 = norm_layer(conv_dim * 8, num_classes)
 
         self.res1 = ResnetBlock(conv_dim * 8, norm_layer, use_dropout=use_dropout, use_bias=use_bias)
         self.res2 = ResnetBlock(conv_dim * 8, norm_layer, use_dropout=use_dropout, use_bias=use_bias)
         self.res3 = ResnetBlock(conv_dim * 8, norm_layer, use_dropout=use_dropout, use_bias=use_bias)
         self.res4 = ResnetBlock(conv_dim * 8, norm_layer, use_dropout=use_dropout, use_bias=use_bias)
 
-        self.up1 = nn.utils.spectral_norm(nn.ConvTranspose2d(conv_dim * 8, conv_dim * 4, 3, padding=1, stride=2, bias=use_bias))
+        self.up1 = nn.utils.spectral_norm(nn.ConvTranspose2d(conv_dim * 8, conv_dim * 4, 3, padding=1, stride=2, 
+                                                             output_padding=1, bias=use_bias))
         self.upnorm1 = norm_layer(conv_dim * 4, num_classes)
-        self.up2 = nn.utils.spectral_norm(nn.ConvTranspose2d(conv_dim * 4, conv_dim * 2, 3, padding=1, stride=2, bias=use_bias))
+        self.up2 = nn.utils.spectral_norm(nn.ConvTranspose2d(conv_dim * 4, conv_dim * 2, 3, padding=1, stride=2,
+                                                             output_padding=1, bias=use_bias))
         self.upnorm2 = norm_layer(conv_dim * 2, num_classes)
-        self.up3 = nn.utils.spectral_norm(nn.ConvTranspose2d(conv_dim * 2, conv_dim * 1, 3, padding=p, stride=2, bias=use_bias))
+        self.up3 = nn.utils.spectral_norm(nn.ConvTranspose2d(conv_dim * 2, conv_dim * 1, 3, padding=p, stride=2,
+                                                             output_padding=1, bias=use_bias))
         self.upnorm3 = norm_layer(conv_dim * 1, num_classes)
 
-        self.c2 = nn.utils.spectral_norm(nn.ConvTranspose2d(conv_dim * 1, in_channels, 7, bias=use_bias))
+        self.c2 = nn.utils.spectral_norm(nn.Conv2d(conv_dim * 1, in_channels, 7, bias=use_bias))
 
     def forward(self, x, y):
         p2d = (3, 3, 3, 3)
@@ -116,7 +119,7 @@ class ResnetGenerator(nn.Module):
         X_ = F.relu(x_)
 
         x_ = F.pad(x_, p2d, 'reflect')
-        x_ = self.norm2(self.c2(x_), y)
+        x_ = self.c2(x_)
         x_ = torch.tanh(x_)
 
         return x_
@@ -133,18 +136,6 @@ class ResnetBlock(nn.Module):
         Original Resnet paper: https://arxiv.org/pdf/1512.03385.pdf
         """
         super(ResnetBlock, self).__init__()
-        self.conv_block = self.build_conv_block(conv_dim, norm_layer, padding_type, num_classes, use_dropout, use_bias)
-
-    def build_conv_block(self, conv_dim, norm_layer, padding_type, num_classes, use_dropout, use_bias):
-        """Construct a convolutional block.
-        Parameters:
-            conv_dim (int)           -- the number of channels in the conv layer.
-            padding_type (str)  -- the name of padding layer: reflect | replicate | zero
-            norm_layer          -- normalization layer
-            use_dropout (bool)  -- if use dropout layers.
-            use_bias (bool)     -- if the conv layer uses bias or not
-        Returns a conv block (with a conv layer, a normalization layer, and a non-linearity layer (ReLU))
-        """
         self.padding_type = padding_type
         self.use_dropout = use_dropout
         p = 0
@@ -156,15 +147,15 @@ class ResnetBlock(nn.Module):
         self.c2 = nn.Conv2d(conv_dim, conv_dim, kernel_size=3, padding=p, bias=use_bias)
         self.norm2 = norm_layer(conv_dim, num_classes)
 
-    def forward(self, x):
+    def forward(self, x, y):
         """Forward function (with skip connections)"""
         p2d = (1, 1, 1, 1)
         if self.padding_type != 'zero':
-            x_ = F.padding(x, p2d, self.padding_type)
+            x_ = F.pad(x, p2d, self.padding_type)
             x_ = self.norm1(self.c1(x_), y)
             x_ = F.relu(x_)
 
-            x_ = F.padding(x_, p2d, self.padding_type)
+            x_ = F.pad(x_, p2d, self.padding_type)
             x_ = self.norm2(self.c2(x_), y)
         else:
             x_ = self.norm1(self.c1(x_), y)
