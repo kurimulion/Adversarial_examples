@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import selfattn
+import utils
 
 class Discriminator(nn.Module):
     def __init__(self, in_channels=1, num_classes=10, out_channels=1, conv_dim=64, MNIST=True):
@@ -43,9 +43,9 @@ class Discriminator(nn.Module):
 
 def Generator(in_channels=1, conv_dim=64, G_type='unet', norm='batch', MNIST=True):
     if norm == 'batch':
-        norm_layer = selfattn.ConditionalBatchNorm2d
+        norm_layer = utils.ConditionalBatchNorm2d
     else:
-        norm_layer = selfattn.ConditionalInstanceNorm2d
+        norm_layer = utils.ConditionalInstanceNorm2d
 
     if G_type == 'unet':
         net = UnetGenerator(in_channels, norm_layer, conv_dim=conv_dim, MNIST=MNIST)
