@@ -9,13 +9,24 @@ class Discriminator(nn.Module):
         This is a conditional discriminator with projection. The input is input image or generated image.
         With MNIST data the dimensions of output of last conv layer is N, conv_dim * 4, 1, 1
         Only implement the case for number of layer = 1, because the dimensions of the MNIST are much smaller.
-        The code is adapted from https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/models/pix2pix_model.py
+        The code is adapted from https://github.com/phillipi/pix2pix/blob/master/models.lua
         """
         super(Discriminator, self).__init__()
         p = 1
         if MNIST:
             p += 2 
-        sequence = [nn.utils.spectral_norm(nn.Conv2d(in_channels, conv_dim, 4, padding=p, stride=2)), nn.LeakyReLU(0.2)]
+        #sequence = [nn.utils.spectral_norm(nn.Conv2d(in_channels, conv_dim, 4, padding=p, stride=2)), nn.LeakyReLU(0.2)]
+        self.model = nn.Sequential(*[nn.utils.spectral_norm(nn.Conv2d(in_channels, conv_dim, 4, padding=p, stride=2)),
+                                   nn.LeakyReLU(0.2),
+                                   nn.utils.spectral_norm(nn.Conv2d(conv_dim, conv_dim * 2, 4, padding=1, stride=2)),
+                                   nn.BatchNorm2d(conv_dim * 2),
+                                   nn.LeakyReLU(0.2),
+                                   nn.utils.spectral_norm(nn.Conv2d(conv_dim * 2, conv_dim * 2, 4, padding=1, stride=1)),
+                                   nn.BatchNorm2d(conv_dim * 2),
+                                   nn.LeakyReLU(0.2)])
+        self.c1 = nn.utils.spectral_norm(nn.Conv2d(conv_dim * 2, 1, 3, padding=1, stride=1))
+        self.snembed = nn.utils.spectral_norm(nn.Embedding(num_classes, 7 * 7 * conv_dim * 2))                          
+        '''
         nf_mult = 1
         nf_mult_prev = 1
         for n in range(1, 5):
@@ -27,16 +38,20 @@ class Discriminator(nn.Module):
         self.model = nn.Sequential(*sequence)
         self.f1 = nn.utils.spectral_norm(nn.Linear(conv_dim * 4, 1))
         self.snembed = nn.utils.spectral_norm(nn.Embedding(num_classes, conv_dim * 4))
+        '''
 
     def forward(self, x, y):
+        N, _, _, _ = x.size()
         x_ = self.model(x)
-        x_ = x_.squeeze()
-        x_0 = x_.clone()
-        output = self.f1(x_)
+        #x_ = x_.squeeze()
+        #x_0 = x_.clone()
+        x_0 = torch.flatten(x_, start_dim=1)
+        output = self.c1(x_) # N, 1, 7, 7
+        #output = self.f1(x_)
 
         y_ = y.type(torch.cuda.LongTensor)
-        labels = self.snembed(y_)
-        output += torch.sum(x_0 * labels, 1, keepdim=True)
+        labels = self.snembed(y_) # N, conv_dim * 2 * 7 * 7
+        output += torch.sum((x_0 * labels).view(N, -1, 7, 7), 1, keepdim=True)
         #output = torch.sigmoid(output)
 
         return output
